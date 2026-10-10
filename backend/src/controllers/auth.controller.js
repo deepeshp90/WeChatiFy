@@ -1,6 +1,9 @@
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.js";
 import bcrypt from 'bcryptjs'
+import "dotenv/config";
+import { ENV } from "../lib/env.js";
+import { sendWelcomeEmail } from "../emails/emailHandlers.js";
 
 
 export const signup = async (req, res) => {
@@ -37,13 +40,13 @@ export const signup = async (req, res) => {
     });
       if (newUser) {
       // before CR:
-       generateToken(newUser._id, res);
-       await newUser.save();
+     //  generateToken(newUser._id, res);
+       //await newUser.save();
 
       // after CR:
       // Persist user first, then issue auth cookie
-     // const savedUser = await newUser.save();
-      //generateToken(newUser._id, res);
+      const savedUser = await newUser.save();
+      generateToken(newUser._id, res);
 
       res.status(201).json({
         _id: newUser._id,
@@ -52,6 +55,11 @@ export const signup = async (req, res) => {
         profilePic: newUser.profilePic,
       });
 //to do : send a welcome email after signup 
+try{
+await sendWelcomeEmail(savedUser.email, savedUser.fullName,ENV.CLIENT_URL);
+}catch(error){
+console.error("Error sending welcome email:", error);
+}
 
     }else{
       res.status(400).json({message:"Invalid User data"})
